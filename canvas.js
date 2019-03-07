@@ -1,6 +1,8 @@
 var canvas = document.querySelector('canvas');
 var cc = canvas.getContext('2d');
 
+var logger = document.querySelector('span');
+
 canvas.width = 500;
 canvas.height = 500;
 
@@ -44,9 +46,7 @@ function start(){
 
 
 function update() {
-  console.log(global)
   if(global.moving) {moveTowardCenter();}
-  console.log(global)
 }
 
 function draw() {
@@ -97,7 +97,6 @@ function moveTowardCenter() {
   clickCenter = {x:(global.lastClick.x - global.pos.x + 0.5)*global.scale.x - global.offset.x,
                  y:(global.lastClick.y - global.pos.y + 0.5)*global.scale.y - global.offset.y};
 
-  console.log(clickCenter)
   xDistanceToCenter = clickCenter.x - canvasCenter.x
   yDistanceToCenter = clickCenter.y - canvasCenter.y
 
@@ -105,6 +104,15 @@ function moveTowardCenter() {
   global.offset.x += xDistanceToCenter/10;
   global.offset.y += yDistanceToCenter/10;
 
+  correctOffsetAndPos()
+
+  // turn off moving if at center
+  if (xDistanceToCenter*xDistanceToCenter + yDistanceToCenter*yDistanceToCenter < 10){
+    global.moving = false;
+  }
+}
+
+function correctOffsetAndPos() {
   // adjust pos if needed
   if (global.offset.x > global.scale.x || global.offset.x < 0) {
     error = Math.floor(global.offset.x / global.scale.x);
@@ -117,10 +125,6 @@ function moveTowardCenter() {
     global.pos.y += error;
   }
 
-  // turn off moving if at center
-  if (xDistanceToCenter*xDistanceToCenter + yDistanceToCenter*yDistanceToCenter < 10){
-    global.moving = false;
-  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -130,7 +134,16 @@ function moveTowardCenter() {
 
 canvas.addEventListener("wheel", function(e){
   e.preventDefault();
-  // console.log(e)
+  oldScale = {x:global.scale.x,y:global.scale.y};
+  logger.innerHTML = e.wheelDelta;
+  dir = e.wheelDelta > 0 ? 1 : -1;
+  amount = dir * Math.log10(Math.abs(e.wheelDelta)) ;
+  global.scale.x += amount;
+  global.scale.y += amount;
+  
+  global.offset.x += (1 - oldScale.x/global.scale.x)*canvasCenter.x;
+  global.offset.y += (1 - oldScale.y/global.scale.y)*canvasCenter.y;
+  correctOffsetAndPos();
 });
 
 canvas.addEventListener("click", onClick);
